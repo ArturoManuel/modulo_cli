@@ -1,4 +1,22 @@
-Consideraciones a la horar de correr el proyecto .
+# Proyecto: Nombre del Proyecto
+
+Este proyecto es una aplicación desarrollada en Python. A continuación, se detallan los pasos necesarios para configurar y ejecutar correctamente el proyecto en tu entorno local.
+
+## Requisitos previos
+
+Antes de comenzar, asegúrate de cumplir con los siguientes requisitos:
+
+- **Python 3.6+** instalado en tu máquina.
+- Acceso a privilegios de superusuario (sudo).
+- Acceso a internet para descargar dependencias.
+
+## Instrucciones para correr el proyecto
+
+### 1. Configurar el archivo de DNS
+
+Es importante que el archivo de configuración de resoluciones DNS esté correctamente configurado para evitar problemas de conectividad. Para hacerlo, edita el archivo `/etc/resolv.conf` usando `nano` o tu editor de preferencia.
+
+sudo nano /etc/resolv.conf
 
 1) No olvidar configurar el sudo nano /etc/resolv.conf
 ![image](https://github.com/user-attachments/assets/12d05a7a-cad1-4fc2-9884-dbf32d181293)
