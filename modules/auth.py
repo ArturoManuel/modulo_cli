@@ -2,10 +2,7 @@ import random
 from modules.email_service import send_token
 from modules.user_roles import validate_email ,get_user_role
 
-import os
 
-def clear_terminal():
-    os.system('cls' if os.name == 'nt' else 'clear')
 
 # Función para generar el token
 def generate_token():
@@ -26,9 +23,19 @@ def authenticate_user(email):
     user_token = input("Ingrese el token que recibió en su correo: ")
 
     if user_token == token:
+        # Solicitar nombre de usuario y contraseña
         username = input("Ingrese su nombre de usuario: ")
         password = input("Ingrese su contraseña: ")
-        return get_user_role(email), True
+
+        # Obtener el rol del usuario desde el backend
+        role = get_user_role(username, password)
+
+        if role:
+            return role, True  # Retorna el rol y True si la autenticación fue exitosa
+        else:
+            print("Nombre de usuario o contraseña incorrectos.")
+            return None, False
     else:
         print("Token incorrecto.")
         return None, False
+
