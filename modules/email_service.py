@@ -2,12 +2,12 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
-def send_token(email, token):
+def send_token(email, token, username):
     sender = "noriegaarturonoriega2@gmail.com"
     recipient = email
     subject = "Autenticación - Cloud Resource Controller"
 
-    # Cuerpo del correo en HTML
+    # Cuerpo del correo en HTML, ahora usando el username dinámico
     html = f"""
     <html>
     <head>
@@ -62,7 +62,7 @@ def send_token(email, token):
                 <h1>Cloud Resource Controller</h1>
             </div>
             <div class="content">
-                <p>Hola <strong>Arturo Noriega</strong>,</p>
+                <p>Hola <strong>{username}</strong>,</p>
                 <p>Has solicitado autenticación para acceder al sistema de gestión de recursos de la nube.</p>
                 <p>Tu token de acceso es el siguiente:</p>
                 <div class="token">{token}</div>

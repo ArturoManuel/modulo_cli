@@ -10,25 +10,28 @@ def generate_token():
 
 # Función de autenticación del usuario
 def authenticate_user(email):
-    if not validate_email(email):
-        # Si el correo no es válido, no proceder
+    # Validar el correo y obtener el username
+    is_registered, username = validate_email(email)
+    
+    if not is_registered:
+        # Si el correo no es válido o no registrado, no proceder
         print("Correo no válido o no registrado. El acceso está restringido.")
         return None, False
 
-    # Generar y enviar token
+    # Generar y enviar token, ahora con el username
     token = generate_token()
-    send_token(email, token)
+    send_token(email, token, username)  # Pasar también el username a send_token
 
     # Solicitar el token ingresado por el usuario
     user_token = input("Ingrese el token que recibió en su correo: ")
 
     if user_token == token:
         # Solicitar nombre de usuario y contraseña
-        username = input("Ingrese su nombre de usuario: ")
+        input_username = input("Ingrese su nombre de usuario: ")
         password = input("Ingrese su contraseña: ")
 
         # Obtener el rol del usuario desde el backend
-        role = get_user_role(username, password)
+        role = get_user_role(input_username, password)
 
         if role:
             return role, True  # Retorna el rol y True si la autenticación fue exitosa
@@ -38,4 +41,5 @@ def authenticate_user(email):
     else:
         print("Token incorrecto.")
         return None, False
+
 
