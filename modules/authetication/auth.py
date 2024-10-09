@@ -1,6 +1,6 @@
 import random
-from modules.email_service import send_token
-from modules.user_roles import validate_email ,get_user_role
+from modules.authetication.email_service import send_token
+from modules.authetication.user_roles import validate_email ,get_user_role
 
 
 

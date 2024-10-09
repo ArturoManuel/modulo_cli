@@ -3,7 +3,7 @@ import json
 from modules.menus.users.topology import show_topology,show_user_menu,show_flavors
 
 from modules.slice_manager.routes import  implement_topology
-from modules.user_roles import session_data
+from modules.authetication.user_roles import session_data
 
 def clear_console():
     os.system('cls' if os.name == 'nt' else 'clear')

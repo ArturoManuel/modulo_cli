@@ -1,7 +1,6 @@
 
-from modules.auth import authenticate_user
+from modules.authetication.auth import authenticate_user
 from modules.menus.menus import execute_menu
-from modules.user_roles import get_user_role
 import os
 
 def clear_terminal():
