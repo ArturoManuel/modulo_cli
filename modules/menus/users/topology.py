@@ -15,6 +15,8 @@ def admin_topology_menu():
 
 
 
+
+
 def show_user_menu():
     print("\n--- Menú Usuario Corriente ---")
     print("1. Implementar topología predefinida")

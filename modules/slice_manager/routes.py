@@ -4,10 +4,8 @@ from config_backend import slice_manager as BASE_URL
 from modules.menus.users.topology import show_topology,show_flavors,select_flavor
 import json
 
-
 def implement_topology(user_id):
     topology = {}
-
     # Selección de la topología
     topology_option = show_topology()
     if topology_option == '1':
@@ -20,14 +18,29 @@ def implement_topology(user_id):
     # Ingreso de la cantidad de nodos (VMs)
     topology['nodos'] = int(input("Ingrese la cantidad de nodos (VMs): "))
 
+    # Validar número mínimo de nodos para topologías
+    if topology['topologia'] == "anillo" and topology['nodos'] < 3:
+        print("Error: La topología 'anillo' requiere al menos 3 nodos.")
+        return None
+    elif topology['topologia'] == "lineal" and topology['nodos'] < 2:
+        print("Error: La topología 'lineal' requiere al menos 2 nodos.")
+        return None
+
     # Solicitar el nombre del OVS (solo una vez)
     ovs_name = input("Ingrese el nombre del OVS: ")
 
-    # Solicitar las VLANs de acuerdo a la cantidad de nodos
+    # Solicitar las VLANs de acuerdo a la topología seleccionada
     vlans = []
-    for i in range(1, topology['nodos'] + 1):
-        vlan = input(f"Ingrese el nombre de la VLAN {i}: ")
-        vlans.append(vlan)
+    if topology['topologia'] == "lineal":
+        # Para topología lineal solicitamos `nodos - 1` VLANs
+        for i in range(1, topology['nodos']):
+            vlan = input(f"Ingrese el nombre de la VLAN {i}: ")
+            vlans.append(vlan)
+    elif topology['topologia'] == "anillo":
+        # Para topología anillo, se solicita una VLAN por cada nodo
+        for i in range(1, topology['nodos'] + 1):
+            vlan = input(f"Ingrese el nombre de la VLAN {i}: ")
+            vlans.append(vlan)
 
     # Crear todas las VMs primero
     vms_creadas = []
@@ -43,6 +56,7 @@ def implement_topology(user_id):
 
     # Solo si todas las VMs fueron creadas con éxito, proceder con la creación de la topología
     if len(vms_creadas) == topology['nodos']:
+        topology['vms'] = vms_creadas
         # Solicitar el nombre del archivo de topología
         topology['file_name'] = input("Ingrese el nombre del archivo de topología: ")
 
@@ -57,7 +71,6 @@ def implement_topology(user_id):
             print(f"Error creando la topología: {response.status_code}, {response.text}")
     else:
         print("Error: no se pudieron crear todas las VMs.")
-
 
 def create_vm_anillo(user_id, vm_number, ovs_name, vlans, num_vms):
     vm = {}
@@ -106,7 +119,6 @@ def create_vm_anillo(user_id, vm_number, ovs_name, vlans, num_vms):
     return vm
 
 
-
 def create_vm_lineal(user_id, vm_number, ovs_name, vlans, num_vms):
     vm = {}
     vm['name'] = input(f"Ingrese el nombre de la VM{vm_number}: ")
@@ -119,33 +131,34 @@ def create_vm_lineal(user_id, vm_number, ovs_name, vlans, num_vms):
     vm['ram'] = flavor_ram
     vm['imagen'] = input(f"Ingrese el nombre de la imagen para VM{vm_number} (ejemplo: cirros-0.5.1-x86_64-disk.img): ")
 
-    # Interfaces: La primera VM tendrá una interfaz, las VMs intermedias tendrán dos interfaces, y la última VM tendrá una interfaz.
+    # Interfaces
     vm['interfaces'] = []
-    
+
     if vm_number == 1:
-        # La primera VM solo se conecta a la primera VLAN
-        vlan1 = vlans[0]
+        # La primera VM se conecta a la primera VLAN
+        vlan = vlans[0]
         vm['interfaces'].append({
-            "tap_name": f"tap-{vm['name']}-{vlan1}",
-            "vlan": vlan1
+            "tap_name": f"tap-{ovs_name}-{vm['name']}-{vlan}",
+            "vlan": vlan
         })
     elif vm_number == num_vms:
-        # La última VM solo se conecta a la última VLAN
-        vlan1 = vlans[-1]
+        # La última VM se conecta a la última VLAN
+        vlan = vlans[-1]
         vm['interfaces'].append({
-            "tap_name": f"tap-{vm['name']}-{vlan1}",
-            "vlan": vlan1
+            "tap_name": f"tap-{ovs_name}-{vm['name']}-{vlan}",
+            "vlan": vlan
         })
     else:
-        # Las VMs intermedias se conectan a dos VLANs consecutivas
-        vlan1, vlan2 = vlans[vm_number - 2], vlans[vm_number - 1]
+        # VMs intermedias se conectan a dos VLANs consecutivas
+        vlan_prev = vlans[vm_number - 2]  # VLAN anterior
+        vlan_curr = vlans[vm_number - 1]  # VLAN actual
         vm['interfaces'].append({
-            "tap_name": f"tap-{vm['name']}-{vlan1}",
-            "vlan": vlan1
+            "tap_name": f"tap-{ovs_name}-{vm['name']}-{vlan_prev}",
+            "vlan": vlan_prev
         })
         vm['interfaces'].append({
-            "tap_name": f"tap-{vm['name']}-{vlan2}",
-            "vlan": vlan2
+            "tap_name": f"tap-{ovs_name}-{vm['name']}-{vlan_curr}",
+            "vlan": vlan_curr
         })
 
     # Realizar la solicitud POST para agregar la VM
@@ -159,11 +172,6 @@ def create_vm_lineal(user_id, vm_number, ovs_name, vlans, num_vms):
         print(f"Error creando la VM: {response.status_code}, {response.text}")
     
     return vm
-
-
-
-
-
 
 
 
