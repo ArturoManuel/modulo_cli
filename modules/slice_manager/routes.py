@@ -3,6 +3,7 @@ import requests
 from config_backend import slice_manager as BASE_URL
 from modules.menus.users.topology import show_topology,show_flavors,select_flavor
 import json
+import os
 
 def implement_topology(user_id):
     topology = {}
@@ -172,6 +173,82 @@ def create_vm_lineal(user_id, vm_number, ovs_name, vlans, num_vms):
         print(f"Error creando la VM: {response.status_code}, {response.text}")
     
     return vm
+
+
+
+
+def clear_console():
+    os.system('cls' if os.name == 'nt' else 'clear')
+
+def unir_topologias_cli(slices):
+    while True:
+        print("\nOpciones:")
+        print("1. Unir topologías")
+        print("2. Regresar al menú anterior")
+        user_option = input("Seleccione una opción: ")
+        
+        if user_option == '1':
+            # Solicitar topología 1
+            topo1 = input("Ingrese el nombre de la topología 1 que desea unir (sin '.json'): ")
+            if f"6_{topo1}.json" not in slices:
+                print(f"El nombre '{topo1}' no está en la lista. Intente de nuevo.")
+                continue
+            
+            # Solicitar topología 2
+            topo2 = input("Ingrese el nombre de la topología 2 que desea unir (sin '.json'): ")
+            if f"6_{topo2}.json" not in slices:
+                print(f"El nombre '{topo2}' no está en la lista. Intente de nuevo.")
+                continue
+            
+            # Solicitar la VM de topología 1
+            vm1 = input(f"Ingrese el nombre de la VM de la topología '{topo1}': ")
+
+            # Solicitar la VM de topología 2
+            vm2 = input(f"Ingrese el nombre de la VM de la topología '{topo2}': ")
+            
+            # Solicitar el valor de la VLAN
+            vlan_value = input("Ingrese el valor de la VLAN para unir las VMs: ")
+
+            # Solicitar el nombre del archivo de salida
+            output_file_name = input("Ingrese el nombre del archivo para guardar la nueva topología: ")
+
+            # Datos para enviar al servidor
+            payload = {
+                "user_id": 6,  # El ID del usuario es 6
+                "topo1_name": topo1,
+                "topo2_name": topo2,
+                "vm1_name": vm1,
+                "vm2_name": vm2,
+                "vlan_union": vlan_value,
+                "output_file_name": output_file_name
+            }
+
+            # Hacer la solicitud POST al endpoint de FastAPI
+            try:
+                response = requests.post(f"{BASE_URL}/unir_topologias/", json=payload)
+                if response.status_code == 201:
+                    data = response.json()
+                    print(f"Topologías unidas exitosamente. Archivo creado: {data['file']}")
+                else:
+                    print(f"Error al unir las topologías: {response.json()['detail']}")
+            except Exception as e:
+                print(f"Error al conectar con el servidor: {e}")
+            
+            input("\nPresione Enter para regresar al menú anterior...")
+            break  # Regresar al menú anterior después de unir topologías
+
+        elif user_option == '2':
+            clear_console()
+            break  # Regresar al menú anterior
+
+        else:
+            print("Opción no válida. Intente de nuevo.")
+            input("Presione Enter para continuar...")
+
+
+
+
+
 
 
 

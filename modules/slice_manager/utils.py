@@ -2,7 +2,7 @@ import requests
 from config_backend import slice_manager as BASE_URL
 import os
 from modules.menus.users.topology import admin_topology_menu
-from modules.slice_manager.routes import list_slices ,view_slice_details,delete_slice
+from modules.slice_manager.routes import list_slices ,view_slice_details,delete_slice ,unir_topologias_cli
 def clear_console():
     os.system('cls' if os.name == 'nt' else 'clear')
 
@@ -54,51 +54,7 @@ def admin_topology(user_id):
                     print(f"{i}. {slice_file}")
                 
                 # Menú para unir topologías o regresar
-                while True:
-                    print("\nOpciones:")
-                    print("1. Unir topologías")
-                    print("2. Regresar al menú anterior")
-                    user_option = input("Seleccione una opción: ")
-                    
-                    if user_option == '1':
-                        # Solicitar topología 1
-                        topo1 = input("Ingrese el nombre de la topología 1 que desea unir: ")
-                        if topo1 not in slices:
-                            print(f"El nombre '{topo1}' no está en la lista. Intente de nuevo.")
-                            continue
-                        
-                        # Solicitar topología 2
-                        topo2 = input("Ingrese el nombre de la topología 2 que desea unir: ")
-                        if topo2 not in slices:
-                            print(f"El nombre '{topo2}' no está en la lista. Intente de nuevo.")
-                            continue
-                        
-                        # Solicitar la VM de topología 1
-                        vm1 = input(f"Ingrese el nombre de la VM de la topología '{topo1}': ")
-
-                        # Solicitar la VM de topología 2
-                        vm2 = input(f"Ingrese el nombre de la VM de la topología '{topo2}': ")
-                        
-                        # Solicitar el valor de la VLAN
-                        vlan_value = input("Ingrese el valor de la VLAN para unir las VMs: ")
-
-                        # Lógica para unir las topologías usando las VMs y VLAN
-                        print(f"Uniendo las VMs {vm1} (de {topo1}) y {vm2} (de {topo2}) usando VLAN {vlan_value}...")
-
-                        # Aquí puedes llamar a la función que une las topologías
-
-                        input("\nPresione Enter para regresar al menú anterior...")
-                        clear_console()
-                        break  # Regresar al menú anterior después de unir topologías
-
-                    elif user_option == '2':
-                        clear_console()
-                        break  # Regresar al menú anterior
-
-                    else:
-                        print("Opción no válida. Intente de nuevo.")
-                        input("Presione Enter para continuar...")
-
+                unir_topologias_cli(slices)
             else:
                 print("No se encontraron slices para este usuario.")
                 input("Presione Enter para continuar...")
