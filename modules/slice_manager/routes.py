@@ -2,6 +2,8 @@
 import requests
 from config_backend import slice_manager as BASE_URL
 from modules.menus.users.topology import show_topology,show_flavors,select_flavor
+import json
+
 
 def implement_topology(user_id):
     topology = {}
@@ -31,7 +33,12 @@ def implement_topology(user_id):
     vms_creadas = []
     for i in range(topology['nodos']):
         print(f"Creando VM {i + 1} de {topology['nodos']}")
-        vm = create_vm(user_id, i + 1, ovs_name, vlans, topology['nodos'])
+        
+        if topology['topologia'] == "anillo":
+            vm = create_vm_anillo(user_id, i + 1, ovs_name, vlans, topology['nodos'])
+        elif topology['topologia'] == "lineal":
+            vm = create_vm_lineal(user_id, i + 1, ovs_name, vlans, topology['nodos'])
+        
         vms_creadas.append(vm)
 
     # Solo si todas las VMs fueron creadas con éxito, proceder con la creación de la topología
@@ -52,7 +59,7 @@ def implement_topology(user_id):
         print("Error: no se pudieron crear todas las VMs.")
 
 
-def create_vm(user_id, vm_number, ovs_name, vlans, num_vms):
+def create_vm_anillo(user_id, vm_number, ovs_name, vlans, num_vms):
     vm = {}
     vm['name'] = input(f"Ingrese el nombre de la VM{vm_number}: ")
     vm['ovs_name'] = ovs_name
@@ -99,6 +106,125 @@ def create_vm(user_id, vm_number, ovs_name, vlans, num_vms):
     return vm
 
 
+
+def create_vm_lineal(user_id, vm_number, ovs_name, vlans, num_vms):
+    vm = {}
+    vm['name'] = input(f"Ingrese el nombre de la VM{vm_number}: ")
+    vm['ovs_name'] = ovs_name
+
+    # Selección del flavor para esta VM
+    flavor_option = show_flavors()
+    flavor_cpu, flavor_ram = select_flavor(flavor_option)
+    vm['cpu'] = flavor_cpu
+    vm['ram'] = flavor_ram
+    vm['imagen'] = input(f"Ingrese el nombre de la imagen para VM{vm_number} (ejemplo: cirros-0.5.1-x86_64-disk.img): ")
+
+    # Interfaces: La primera VM tendrá una interfaz, las VMs intermedias tendrán dos interfaces, y la última VM tendrá una interfaz.
+    vm['interfaces'] = []
+    
+    if vm_number == 1:
+        # La primera VM solo se conecta a la primera VLAN
+        vlan1 = vlans[0]
+        vm['interfaces'].append({
+            "tap_name": f"tap-{vm['name']}-{vlan1}",
+            "vlan": vlan1
+        })
+    elif vm_number == num_vms:
+        # La última VM solo se conecta a la última VLAN
+        vlan1 = vlans[-1]
+        vm['interfaces'].append({
+            "tap_name": f"tap-{vm['name']}-{vlan1}",
+            "vlan": vlan1
+        })
+    else:
+        # Las VMs intermedias se conectan a dos VLANs consecutivas
+        vlan1, vlan2 = vlans[vm_number - 2], vlans[vm_number - 1]
+        vm['interfaces'].append({
+            "tap_name": f"tap-{vm['name']}-{vlan1}",
+            "vlan": vlan1
+        })
+        vm['interfaces'].append({
+            "tap_name": f"tap-{vm['name']}-{vlan2}",
+            "vlan": vlan2
+        })
+
+    # Realizar la solicitud POST para agregar la VM
+    url = f"{BASE_URL}/add_vm/{user_id}"
+    headers = {'Content-Type': 'application/json'}
+    response = requests.post(url, json=vm, headers=headers)
+
+    if response.status_code == 200:
+        print(f"VM {vm['name']} creada exitosamente.")
+    else:
+        print(f"Error creando la VM: {response.status_code}, {response.text}")
+    
+    return vm
+
+
+
+
+
+
+
+
+
+def list_slices(user_id: int):
+    url = f"{BASE_URL}/list_slices/{user_id}"  # URL del endpoint
+    try:
+        response = requests.get(url)
+        if response.status_code == 200:
+            data = response.json()
+            slices = data.get("files", [])
+            return slices  # Devolver la lista de slices (archivos)
+        else:
+            print(f"Error: {response.status_code} - {response.text}")
+            return []
+    except requests.exceptions.RequestException as e:
+        print(f"Error conectando al backend: {e}")
+        return []
+
+
+
+
+def view_slice_details(user_id, file_name):
+    url = f"{BASE_URL}/get_slice/"
+    payload = {"file_name": file_name}
+    
+    try:
+        # Haciendo la solicitud POST al endpoint
+        response = requests.post(url, json=payload)
+
+        # Verificar si la respuesta fue exitosa (código 200)
+        if response.status_code == 200:
+            data = response.json()  # Parsear el JSON de la respuesta
+            topology_data = data.get("topology_data", {})
+
+            # Imprimir los detalles de la topología
+            print(f"\n--- Detalles de la topología '{file_name}' ---")
+            print(json.dumps(topology_data, indent=4))
+
+        else:
+            # Manejo de errores en caso de respuesta con código diferente de 200
+            print(f"Error al obtener la topología: {response.status_code} - {response.text}")
+
+    except requests.exceptions.RequestException as e:
+        # Manejo de errores de conexión o solicitud
+        print(f"Error conectando al backend: {e}")
+
+
+
+def delete_slice(file_name: str):
+    url = f"{BASE_URL}/delete_slice/"
+    payload = {"file_name": file_name}
+    
+    try:
+        response = requests.post(url, json=payload)
+        if response.status_code == 200:
+            return response.json()  # Devuelve la respuesta del servidor con el mensaje
+        else:
+            return {"error": f"Error al eliminar el archivo: {response.status_code} - {response.text}"}
+    except requests.exceptions.RequestException as e:
+        return {"error": f"Error conectando al backend: {e}"}
 
 def create_topology(user_id, topology_data):
     """

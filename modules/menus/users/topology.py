@@ -5,11 +5,21 @@ def show_topology():
     print("3. Regresar")
     return input("Seleccione una opción: ")
 
+def admin_topology_menu():
+    print("\n--- Selecciona una option---")
+    print("1. Listar Topología")
+    print("2. Unir topologías")
+    print("3. Borrar Topología")
+    print("4. Regresar")
+    return input("Seleccione una opción:")
+
+
+
 def show_user_menu():
     print("\n--- Menú Usuario Corriente ---")
     print("1. Implementar topología predefinida")
-    print("2. Monitorear recursos del sistema")
-    print("3. Listar VMs")
+    print("2. Administrar Topología")
+    print("3. Desplegar Topologias")
     print("4. Salir")
     return input("Seleccione una opción: ")
 
