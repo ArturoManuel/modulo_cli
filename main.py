@@ -5,14 +5,11 @@ import os
 
 def clear_terminal():
     os.system('cls' if os.name == 'nt' else 'clear')
-
 def main():
     print("Bienvenido al sistema de gestión de VMs y slices")
-
     while True:
         # Autenticación y obtención de token
         email = input("Ingrese su correo: ")
-        print(f"Correo ingresado: {email}")
         role, is_authenticated = authenticate_user(email)
 
         if is_authenticated:

@@ -1,7 +1,8 @@
 
 import requests
 from config_backend import slice_manager as BASE_URL
-from modules.menus.users.topology import show_topology,show_flavors,select_flavor
+from modules.menus.users.topology import show_topology,show_flavors,select_flavor,show_vm ,select_vm
+from modules.slice_manager.grafic_topology import dibujar_topologia
 import json
 import os
 
@@ -27,9 +28,6 @@ def implement_topology(user_id):
         print("Error: La topología 'lineal' requiere al menos 2 nodos.")
         return None
 
-    # Solicitar el nombre del OVS (solo una vez)
-    ovs_name = input("Ingrese el nombre del OVS: ")
-
     # Solicitar las VLANs de acuerdo a la topología seleccionada
     vlans = []
     if topology['topologia'] == "lineal":
@@ -49,9 +47,9 @@ def implement_topology(user_id):
         print(f"Creando VM {i + 1} de {topology['nodos']}")
         
         if topology['topologia'] == "anillo":
-            vm = create_vm_anillo(user_id, i + 1, ovs_name, vlans, topology['nodos'])
+            vm = create_vm_anillo(user_id, i + 1, vlans, topology['nodos'])
         elif topology['topologia'] == "lineal":
-            vm = create_vm_lineal(user_id, i + 1, ovs_name, vlans, topology['nodos'])
+            vm = create_vm_lineal(user_id, i + 1, vlans, topology['nodos'])
         
         vms_creadas.append(vm)
 
@@ -73,21 +71,31 @@ def implement_topology(user_id):
     else:
         print("Error: no se pudieron crear todas las VMs.")
 
-def create_vm_anillo(user_id, vm_number, ovs_name, vlans, num_vms):
+def create_vm_anillo(user_id, vm_number, vlans, num_vms):
     vm = {}
     vm['name'] = input(f"Ingrese el nombre de la VM{vm_number}: ")
-    vm['ovs_name'] = ovs_name
 
     # Selección del flavor para esta VM
     flavor_option = show_flavors()
     flavor_cpu, flavor_ram = select_flavor(flavor_option)
     vm['cpu'] = flavor_cpu
     vm['ram'] = flavor_ram
-    vm['imagen'] = input(f"Ingrese el nombre de la imagen para VM{vm_number} (ejemplo: cirros-0.5.1-x86_64-disk.img): ")
-
+    vm_option = show_vm()
+    vm['imagen'] = select_vm(vm_option)
+    
     # Interfaces: cada VM tendrá 2 interfaces conectadas a VLANs
     vm['interfaces'] = []
-    
+
+    # Preguntar si la VM necesita acceso a Internet
+    internet_option = input(f"¿La VM{vm_number} necesita acceso a Internet? (s/n): ").lower()
+
+    if internet_option == 's':
+        # Si la VM necesita acceso a Internet, la primera interfaz será para la VLAN 100
+        vm['interfaces'].append({
+            "tap_name": f"tap-{vm['name']}-100",
+            "vlan": "100"
+        })
+
     # Asignar VLANs de acuerdo al orden de las VMs y el ovs_name
     if vm_number == 1:
         # Para la primera VM, se conecta la primera VLAN y la última para cerrar el ciclo
@@ -96,14 +104,14 @@ def create_vm_anillo(user_id, vm_number, ovs_name, vlans, num_vms):
         # Para las otras VMs, se asignan VLANs consecutivas
         vlan1, vlan2 = vlans[vm_number - 2], vlans[vm_number - 1]
 
-    # Definir los taps con los nombres y VLANs
+    # Definir las interfaces para las VLANs seleccionadas, manteniendo las anteriores
     vm['interfaces'].append({
-        "tap_name": f"tap-{ovs_name}-{vm['name']}-{vlan1}",
+        "tap_name": f"tap-{vm['name']}-{vlan1}",
         "vlan": vlan1
     })
     
     vm['interfaces'].append({
-        "tap_name": f"tap-{ovs_name}-{vm['name']}-{vlan2}",
+        "tap_name": f"tap-{vm['name']}-{vlan2}",
         "vlan": vlan2
     })
 
@@ -120,33 +128,45 @@ def create_vm_anillo(user_id, vm_number, ovs_name, vlans, num_vms):
     return vm
 
 
-def create_vm_lineal(user_id, vm_number, ovs_name, vlans, num_vms):
+
+def create_vm_lineal(user_id, vm_number, vlans, num_vms):
     vm = {}
     vm['name'] = input(f"Ingrese el nombre de la VM{vm_number}: ")
-    vm['ovs_name'] = ovs_name
 
     # Selección del flavor para esta VM
     flavor_option = show_flavors()
     flavor_cpu, flavor_ram = select_flavor(flavor_option)
     vm['cpu'] = flavor_cpu
     vm['ram'] = flavor_ram
-    vm['imagen'] = input(f"Ingrese el nombre de la imagen para VM{vm_number} (ejemplo: cirros-0.5.1-x86_64-disk.img): ")
+    vm_option = show_vm()
+    vm['imagen'] = select_vm(vm_option)
 
     # Interfaces
     vm['interfaces'] = []
 
+    # Preguntar si la VM necesita acceso a Internet
+    internet_option = input(f"¿La VM{vm_number} necesita acceso a Internet? (s/n): ").lower()
+
+    if internet_option == 's':
+        # Si la VM necesita acceso a Internet, la primera interfaz se asigna a la VLAN 100
+        vm['interfaces'].append({
+            "tap_name": f"tap-{vm['name']}-100",
+            "vlan": "100"
+        })
+
+    # Asignar las VLANs de acuerdo al número de la VM
     if vm_number == 1:
         # La primera VM se conecta a la primera VLAN
         vlan = vlans[0]
         vm['interfaces'].append({
-            "tap_name": f"tap-{ovs_name}-{vm['name']}-{vlan}",
+            "tap_name": f"tap-{vm['name']}-{vlan}",
             "vlan": vlan
         })
     elif vm_number == num_vms:
         # La última VM se conecta a la última VLAN
         vlan = vlans[-1]
         vm['interfaces'].append({
-            "tap_name": f"tap-{ovs_name}-{vm['name']}-{vlan}",
+            "tap_name": f"tap-{vm['name']}-{vlan}",
             "vlan": vlan
         })
     else:
@@ -154,11 +174,11 @@ def create_vm_lineal(user_id, vm_number, ovs_name, vlans, num_vms):
         vlan_prev = vlans[vm_number - 2]  # VLAN anterior
         vlan_curr = vlans[vm_number - 1]  # VLAN actual
         vm['interfaces'].append({
-            "tap_name": f"tap-{ovs_name}-{vm['name']}-{vlan_prev}",
+            "tap_name": f"tap-{vm['name']}-{vlan_prev}",
             "vlan": vlan_prev
         })
         vm['interfaces'].append({
-            "tap_name": f"tap-{ovs_name}-{vm['name']}-{vlan_curr}",
+            "tap_name": f"tap-{vm['name']}-{vlan_curr}",
             "vlan": vlan_curr
         })
 
@@ -173,7 +193,6 @@ def create_vm_lineal(user_id, vm_number, ovs_name, vlans, num_vms):
         print(f"Error creando la VM: {response.status_code}, {response.text}")
     
     return vm
-
 
 
 
@@ -270,6 +289,7 @@ def list_slices(user_id: int):
 
 
 
+# Ver slices :
 
 def view_slice_details(user_id, file_name):
     url = f"{BASE_URL}/get_slice/"
@@ -284,9 +304,12 @@ def view_slice_details(user_id, file_name):
             data = response.json()  # Parsear el JSON de la respuesta
             topology_data = data.get("topology_data", {})
 
-            # Imprimir los detalles de la topología
+            # Imprimir los detalles de la topología en formato JSON
             print(f"\n--- Detalles de la topología '{file_name}' ---")
             print(json.dumps(topology_data, indent=4))
+
+            # Llamar a la función para graficar la topología
+            dibujar_topologia(topology_data)
 
         else:
             # Manejo de errores en caso de respuesta con código diferente de 200
@@ -295,6 +318,15 @@ def view_slice_details(user_id, file_name):
     except requests.exceptions.RequestException as e:
         # Manejo de errores de conexión o solicitud
         print(f"Error conectando al backend: {e}")
+
+
+
+
+
+
+
+
+
 
 
 

@@ -33,6 +33,12 @@ def show_flavors():
     print("4. Flavor 4 (extra large): 8 CPUs, 8 GB de RAM")
     return input("Seleccione una opción: ")
 
+def show_vm():
+    print("\n--- Seleccione la imagen para la VM ---")
+    print("1. cirros-0.5.1-x86_64-disk.img")
+    return input("Seleccione una opción: ")
+
+
 def select_flavor(flavor_option):
     if flavor_option == '1':
         return 1, '1G'
@@ -45,3 +51,7 @@ def select_flavor(flavor_option):
     else:
         print("Opción no válida. Seleccionando Flavor 1 por defecto.")
         return 1, '1G'
+    
+def select_vm(image_vm):
+    if image_vm == '1':
+        return "cirros-0.5.1-x86_64-disk.img"
