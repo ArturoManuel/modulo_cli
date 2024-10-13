@@ -1,5 +1,7 @@
+from tabulate import tabulate
 from modules.slice_manager.routes import list_slices
-from modules.deployment_vm.routes import deploy_topology,delete_topology_funtion
+from modules.deployment_vm.routes import deploy_topology,delete_topology_funtion,get_vm_stats
+import pandas as pd
 
 def select_topology(user_id):
     slices = list_slices(user_id)  # Suponiendo que esta función ya está implementada y retorna una lista de nombres de archivo
@@ -50,6 +52,39 @@ def delete_topology(user_id):
 
 
 def monitor_resources():
-    print("Función para monitorear recursos de una topología seleccionada.")
-    # Aquí va la lógica para monitorear recursos como CPU, memoria, etc.
-    input("Presione Enter para continuar...")
+    # Lista de VMs en la topología
+    vms = {
+        "worker1": "10.0.0.30",
+        "worker2": "10.0.0.40",
+        "worker3": "10.0.0.50"
+    }
+
+    print("Función para monitorear recursos de una topología seleccionada.\n")
+    
+    # Crear un DataFrame con las VMs
+    df = pd.DataFrame(list(vms.items()), columns=["Servidor", "IP"])
+    df['Opción'] = df.index + 1  # Añadir columna 'Opción' para facilitar la selección del usuario
+
+    # Mostrar la tabla ordenando las columnas para que 'Opción' aparezca primero
+    df = df[['Opción', 'Servidor', 'IP']]  # Reordenar las columnas
+
+    # Usar pandas para imprimir el DataFrame formateado
+    print(df.to_string(index=False))
+
+    # Permitir al usuario elegir una VM para monitorear por número de opción
+    try:
+        choice = int(input("\nIngrese el número de la opción del servidor que desea monitorear: "))
+        if 1 <= choice <= len(df):
+            selected_row = df[df['Opción'] == choice]
+            vm_name = selected_row['Servidor'].values[0]
+            ip = selected_row['IP'].values[0]
+            get_vm_stats(ip)
+        else:
+            print("Opción no válida. Asegúrese de ingresar un número de opción correcto.")
+    except ValueError:
+        print("Entrada inválida. Por favor, ingrese un número válido.")
+
+    
+
+
+
