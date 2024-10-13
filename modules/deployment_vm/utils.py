@@ -1,6 +1,7 @@
 from tabulate import tabulate
 from modules.slice_manager.routes import list_slices
-from modules.deployment_vm.routes import deploy_topology,delete_topology_funtion,get_vm_stats
+from modules.deployment_vm.routes import deploy_topology,delete_topology_funtion
+from modules.monitoreo_recursos.routes import get_vm_stats
 import pandas as pd
 
 def select_topology(user_id):

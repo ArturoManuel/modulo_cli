@@ -31,7 +31,8 @@ def validate_email(email: str):
         
 # Función para obtener el rol del usuario
 
-session_data={}
+session_data = {}
+
 def get_user_role(username, password):
     url = f"{autentication}/users/login/"
     payload = {"username": username, "password": password}
@@ -41,9 +42,15 @@ def get_user_role(username, password):
         if response.status_code == 200:
             data = response.json()  # Decodifica la respuesta
             
+            # Guardar los datos del usuario en session_data
             session_data['id'] = data['user']['id']
             session_data['username'] = data['user']['username']
             session_data['rol'] = data['user']['rol']
+
+            # Guardar los tokens en session_data
+            session_data['access_token_slice'] = data['access_token_slice']
+            session_data['access_token_monitoreo'] = data['access_token_monitoreo']
+            session_data['access_token_deployment'] = data['access_token_deployment']
 
             print("Sesión iniciada con éxito.")
             return data['user']['rol']  # Retorna el rol del usuario

@@ -93,8 +93,8 @@ if __name__ == "__main__":
     ssh_password = "20190411"
 
     # Puertos locales y remotos
-    local_ports = [8000, 8001,8002]  # Autenticación y Slice Manager
-    remote_ports = [8000, 8001,8002]
+    local_ports = [7999, 8000,8001,8002]  # Autenticación y Slice Manager
+    remote_ports = [8000, 8001,8002,8003]
 
     # Crear un hilo para la conexión SSH
     tunnel_thread = threading.Thread(
