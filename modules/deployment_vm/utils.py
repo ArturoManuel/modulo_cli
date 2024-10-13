@@ -1,8 +1,18 @@
 from tabulate import tabulate
 from modules.slice_manager.routes import list_slices
-from modules.deployment_vm.routes import deploy_topology,delete_topology_funtion
+from modules.deployment_vm.routes import deploy_topology,delete_topology_funtion,process_vm_data,clean_process_json
 from modules.monitoreo_recursos.routes import get_vm_stats
 import pandas as pd
+
+
+
+def monitorear_vm():
+    print("Listando recursos...")
+    process_vm_data()  # Llama a la función que procesa los datos
+    clean_process_json() 
+    input("Presione Enter para continuar...")
+
+
 
 def select_topology(user_id):
     slices = list_slices(user_id)  # Suponiendo que esta función ya está implementada y retorna una lista de nombres de archivo

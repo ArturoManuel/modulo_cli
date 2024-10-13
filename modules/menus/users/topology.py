@@ -19,7 +19,8 @@ def show_deployment_menu():
     print("1. Seleccionar una topología")
     print("2. Eliminar una topología")
     print("3. Monitorear recursos")
-    print("4. Regresar al menú anterior")
+    print("4. Monitorear procesos")
+    print("5. Regresar al menú anterior")
     return input("Seleccione una opción: ")
 
 
