@@ -6,6 +6,11 @@ import select
 import os
 import sys
 
+def signal_handler(sig, frame):
+    print('Se ha detectado Control+C! Terminando la aplicación...')
+    sys.exit(0)
+
+
 def create_ssh_tunnel(ssh_host, ssh_port, ssh_user, ssh_password, local_ports, remote_host, remote_ports):
     try:
         # Configurar la conexión SSH
@@ -88,8 +93,8 @@ if __name__ == "__main__":
     ssh_password = "20190411"
 
     # Puertos locales y remotos
-    local_ports = [8000, 8001]  # Autenticación y Slice Manager
-    remote_ports = [8000, 8001]
+    local_ports = [8000, 8001,8002]  # Autenticación y Slice Manager
+    remote_ports = [8000, 8001,8002]
 
     # Crear un hilo para la conexión SSH
     tunnel_thread = threading.Thread(

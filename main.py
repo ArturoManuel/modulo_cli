@@ -2,6 +2,12 @@
 from modules.authetication.auth import authenticate_user
 from modules.menus.menus import execute_menu
 import os
+import signal
+import sys
+
+def signal_handler(sig, frame):
+    print('Se ha detectado Control+C! Terminando la aplicación...')
+    sys.exit(0)
 
 def clear_terminal():
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -24,6 +30,7 @@ def main():
 
 
 if __name__ == "__main__":
+    signal.signal(signal.SIGINT, signal_handler)
     main()
 
 

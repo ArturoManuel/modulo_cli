@@ -14,6 +14,13 @@ def admin_topology_menu():
     return input("Seleccione una opción:")
 
 
+def show_deployment_menu():
+    print("\n--- Menú de Despliegue de Topología ---")
+    print("1. Seleccionar una topología")
+    print("2. Eliminar una topología")
+    print("3. Monitorear recursos")
+    print("4. Regresar al menú anterior")
+    return input("Seleccione una opción: ")
 
 
 

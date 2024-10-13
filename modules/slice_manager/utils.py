@@ -24,8 +24,11 @@ def admin_topology(user_id):
                     user_option = input("Seleccione una opción: ")
                     
                     if user_option == '1':
-                        selected_name = input("Ingrese el nombre de la topología que desea ver (por ejemplo: '1_prueba.json'): ")
-                        
+                        selected_name = input("Ingrese el nombre de la topología que desea ver (por ejemplo: '1_prueba.json') o 'r' para regresar: ")
+                        if selected_name.lower() == 'r':
+                            print("Cancelación realizada. Regresando al menú de opciones...")
+                            break  # Salir del sub-bucle y mostrar de nuevo las opciones principales
+
                         if selected_name in slices:
                             view_slice_details(user_id, selected_name)  # Llamada para ver detalles
                             input("\nPresione Enter para regresar a la lista de slices...")
@@ -68,6 +71,7 @@ def admin_topology(user_id):
                 print("\n--- Slices encontrados ---")
                 for i, slice_file in enumerate(slices, 1):
                     print(f"{i}. {slice_file}")
+                
                 while True:
                     print("\nOpciones:")
                     print("1. Borrar un archivo de topología")
@@ -75,24 +79,32 @@ def admin_topology(user_id):
                     user_option = input("Seleccione una opción: ")
 
                     if user_option == '1':
-                        selected_name = input("Ingrese el nombre del archivo de topología que desea borrar (por ejemplo: '1_prueba.json'): ")
-                        
-                        if selected_name in slices:
-                            # Llamada al endpoint para borrar el archivo
-                            delete_response = delete_slice(selected_name)
-                            print(f"\n{delete_response['message']}")
-                            input("\nPresione Enter para regresar al menú anterior...")
-                            clear_console()
-                            break  # Regresar al menú anterior después de borrar
-                        else:
-                            print(f"El nombre '{selected_name}' no está en la lista. Intente de nuevo.")
+                        while True:
+                            selected_name = input("Ingrese el nombre del archivo de topología que desea borrar (por ejemplo: '1_prueba.json') o 'r' para regresar: ")
+                            
+                            if selected_name.lower() == 'r':
+                                print("Cancelación realizada. Regresando al menú de opciones...")
+                                break  # Salir del sub-bucle y mostrar de nuevo las opciones principales
+                            
+                            if selected_name in slices:
+                                # Llamada al endpoint para borrar el archivo
+                                delete_response = delete_slice(selected_name)
+                                print(f"\n{delete_response['message']}")
+                                input("\nPresione Enter para regresar al menú anterior...")
+                                clear_console()
+                                break  # Regresar al menú anterior después de borrar
+                            else:
+                                print(f"El nombre '{selected_name}' no está en la lista. Intente de nuevo.")
+                                continue  # Vuelve a pedir otro nombre o cancelar
 
                     elif user_option == '2':
                         clear_console()
                         break  # Regresar al menú anterior
+
                     else:
                         print("Opción no válida. Intente de nuevo.")
                         input("Presione Enter para continuar...")
+                    
             else:
                 print("No se encontraron slices para este usuario.")
                 input("Presione Enter para continuar...")
