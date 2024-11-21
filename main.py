@@ -5,6 +5,8 @@ import os
 import signal
 import sys
 
+
+
 def signal_handler(sig, frame):
     print('Se ha detectado Control+C! Terminando la aplicación...')
     sys.exit(0)

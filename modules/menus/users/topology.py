@@ -43,7 +43,8 @@ def show_flavors():
 
 def show_vm():
     print("\n--- Seleccione la imagen para la VM ---")
-    print("1. cirros-0.5.1-x86_64-disk.img")
+    print("1. cirros-0.6.2-x86_64-disk.img")
+    print("2. focal-server-cloudimg-amd64.img")
     return input("Seleccione una opción: ")
 
 
@@ -62,4 +63,6 @@ def select_flavor(flavor_option):
     
 def select_vm(image_vm):
     if image_vm == '1':
-        return "cirros-0.5.1-x86_64-disk.img"
+        return "cirros-0.6.2-x86_64-disk.img"
+    elif image_vm == '2':
+        return "focal-server-cloudimg-amd64.img"
