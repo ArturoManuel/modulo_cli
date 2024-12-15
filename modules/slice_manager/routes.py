@@ -5,71 +5,142 @@ from modules.menus.users.topology import show_topology,show_flavors,select_flavo
 from modules.slice_manager.grafic_topology import dibujar_topologia
 import json
 import os
+import platform
+import time
+
+
+
+def clear_console():
+    """Limpia la consola dependiendo del sistema operativo."""
+    if platform.system() == "Windows":
+        os.system("cls")
+    else:
+        os.system("clear")
+
+
+def validate_input(prompt, validation_fn, error_message):
+    """
+    Solicita un input al usuario y lo valida utilizando una función.
+    Permite regresar al input anterior usando la tecla 'r'.
+    
+    :param prompt: Mensaje que se mostrará al usuario.
+    :param validation_fn: Función que evalúa si la entrada es válida.
+    :param error_message: Mensaje que se muestra si la validación falla.
+    :return: Entrada válida o 'retry' si el usuario ingresa 'r'.
+    """
+    while True:
+        user_input = input(prompt).strip()
+        if user_input.lower() == 'r':
+            print("Regresando al paso anterior...")
+            return 'retry'
+        if validation_fn(user_input):
+            return user_input
+        print(error_message)
+        time.sleep(3)
+        clear_console()
+
+
 
 def implement_topology(user_id):
-    topology = {}
-    # Selección de la topología
-    topology_option = show_topology()
-    if topology_option == '1':
-        topology['topologia'] = "anillo"
-    elif topology_option == '2':
-        topology['topologia'] = "lineal"
-    elif topology_option == '3':
-        return None  # Regresar al menú anterior
+    while True:  # Bucle principal
+        topology = {}
+        while True:
+            clear_console()
+            topology_option = validate_input(
+                "Seleccione la topología (1: Anillo, 2: Lineal, 3: Regresar al menú anterior): ",
+                lambda x: x in {'1', '2', '3'},
+                "Opción no válida. Ingrese 1, 2 o 3."
+            )
+            if topology_option == 'retry':
+                continue
+            elif topology_option == '3':
+                return None  # Regresar al menú principal
+            topology['topologia'] = "anillo" if topology_option == '1' else "lineal"
+            break
 
-    # Ingreso de la cantidad de nodos (VMs)
-    topology['nodos'] = int(input("Ingrese la cantidad de nodos (VMs): "))
-
-    # Validar número mínimo de nodos para topologías
-    if topology['topologia'] == "anillo" and topology['nodos'] < 3:
-        print("Error: La topología 'anillo' requiere al menos 3 nodos.")
-        return None
-    elif topology['topologia'] == "lineal" and topology['nodos'] < 2:
-        print("Error: La topología 'lineal' requiere al menos 2 nodos.")
-        return None
-
-    # Solicitar las VLANs de acuerdo a la topología seleccionada
-    vlans = []
-    if topology['topologia'] == "lineal":
-        # Para topología lineal solicitamos `nodos - 1` VLANs
-        for i in range(1, topology['nodos']):
-            vlan = input(f"Ingrese el nombre de la VLAN {i}: ")
-            vlans.append(vlan)
-    elif topology['topologia'] == "anillo":
-        # Para topología anillo, se solicita una VLAN por cada nodo
-        for i in range(1, topology['nodos'] + 1):
-            vlan = input(f"Ingrese el nombre de la VLAN {i}: ")
-            vlans.append(vlan)
-
-    # Crear todas las VMs primero
-    vms_creadas = []
-    for i in range(topology['nodos']):
-        print(f"Creando VM {i + 1} de {topology['nodos']}")
+        # Ingreso de la cantidad de nodos (VMs)
+        while True:
         
-        if topology['topologia'] == "anillo":
-            vm = create_vm_anillo(user_id, i + 1, vlans, topology['nodos'])
-        elif topology['topologia'] == "lineal":
-            vm = create_vm_lineal(user_id, i + 1, vlans, topology['nodos'])
-        
-        vms_creadas.append(vm)
+            nodos = validate_input(
+                "Ingrese la cantidad de nodos (VMs): ",
+                lambda x: x.isdigit() and int(x) > 0,
+                "Entrada no válida. Ingrese un número entero mayor que 0."
+            )
+            if nodos == 'retry':
+                continue
+            topology['nodos'] = int(nodos)
+            if topology['topologia'] == "anillo" and topology['nodos'] < 3:
+                print("Error: La topología 'anillo' requiere al menos 3 nodos.")
+                continue
+            elif topology['topologia'] == "lineal" and topology['nodos'] < 2:
+                print("Error: La topología 'lineal' requiere al menos 2 nodos.")
+                continue
+            break
 
-    # Solo si todas las VMs fueron creadas con éxito, proceder con la creación de la topología
-    if len(vms_creadas) == topology['nodos']:
-        topology['vms'] = vms_creadas
-        # Solicitar el nombre del archivo de topología
-        topology['file_name'] = input("Ingrese el nombre del archivo de topología: ")
+        # Solicitar las VLANs
+        vlans = []
+        vlan_count = topology['nodos'] if topology['topologia'] == "anillo" else topology['nodos'] - 1
+        vlan_index = 0
 
-        # Realizar la solicitud POST para crear la topología
-        url = f"{BASE_URL}/create_topology/{user_id}"
-        headers = {'Content-Type': 'application/json'}
-        response = requests.post(url, json=topology, headers=headers)
+        while vlan_index < vlan_count:
+            vlan = validate_input(
+                f"Ingrese el nombre de la VLAN {vlan_index + 1}: ",
+                lambda x: len(x) > 0,  # Validar que no sea vacío
+                "Entrada no válida. Ingrese un nombre de VLAN no vacío."
+            )
+            if vlan == 'retry':
+                # Regresar al paso anterior (nodos)
+                print("Regresando al paso de cantidad de nodos...")
+                break  # Salir del bucle de VLANs y volver al bucle de nodos
 
-        if response.status_code == 201:
-            print(f"Topología {topology['topologia']} creada exitosamente.")
+            vlans.append(vlan)
+            vlan_index += 1
+
+        if len(vlans) < vlan_count:
+            continue  # Volver a pedir nodos y luego VLANs
+
+        topology['vlans'] = vlans
+
+        # Crear VMs
+        vms_creadas = []
+        for i in range(topology['nodos']):
+            print(f"Creando VM {i + 1} de {topology['nodos']}...")
+            if topology['topologia'] == "anillo":
+                vm = create_vm_anillo(user_id, i + 1, topology['vlans'], topology['nodos'])
+            elif topology['topologia'] == "lineal":
+                vm = create_vm_lineal(user_id, i + 1, topology['vlans'], topology['nodos'])
+            if vm:
+                vms_creadas.append(vm)
+            else:
+                print(f"Error en la creación de la VM {i + 1}. Abortando operación.")
+                return None
+
+        # Crear topología si todas las VMs fueron creadas
+        if len(vms_creadas) == topology['nodos']:
+            while True:
+                file_name = validate_input(
+                    "Ingrese el nombre del archivo de topología: ",
+                    lambda x: len(x) > 0,
+                    "Entrada no válida. Ingrese un nombre de archivo no vacío."
+                )
+                if file_name == 'retry':
+                    continue
+                topology['file_name'] = file_name
+                break
+            
+            response = requests.post(f"{BASE_URL}/create_topology/{user_id}", json=topology)
+            if response.status_code == 201:
+                print(f"Topología '{topology['topologia']}' creada exitosamente.")
+            else:
+                print(f"Error creando la topología: {response.status_code}, {response.text}")
         else:
-            print(f"Error creando la topología: {response.status_code}, {response.text}")
-    else:
-        print("Error: no se pudieron crear todas las VMs.")
+            print("Error: no se pudieron crear todas las VMs.")
+        break
+
+
+
+
+
 
 def create_vm_anillo(user_id, vm_number, vlans, num_vms):
     vm = {}

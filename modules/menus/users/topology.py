@@ -24,13 +24,24 @@ def show_deployment_menu():
     return input("Seleccione una opción: ")
 
 
+def show_user_menu_by_drivers():
+    print("\n--- Menú Drivers Corriente ---")
+    print("1. Linux")
+    print("2. Open Stack")
+    print("3. Salir")
+    return input("Seleccione una opción: ")
+
+
 
 def show_user_menu():
     print("\n--- Menú Usuario Corriente ---")
-    print("1. Implementar topología predefinida")
+    print("1. Generar Plantilla")
     print("2. Administrar Topología")
-    print("3. Desplegar Topologias")
-    print("4. Salir")
+    print("3. Despliegue")
+    print("4. Importar imagen")
+    print("5. Importar plantillas")
+    print("6. Exportar plantillas")
+    print("5. Salir")
     return input("Seleccione una opción: ")
 
 def show_flavors():

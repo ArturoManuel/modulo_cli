@@ -1,12 +1,41 @@
 import random
+import msvcrt
+import sys
 from modules.authetication.email_service import send_token
 from modules.authetication.user_roles import validate_email ,get_user_role
+
+
+
 
 
 
 # Función para generar el token
 def generate_token():
     return str(random.randint(100000, 999999))
+
+def masked_input(prompt=""):
+    print(prompt, end="", flush=True)
+    input_data = []
+    while True:
+        char = msvcrt.getch()  # Captura una tecla
+
+        if char in {b'\r', b'\n'}:  # Si presiona Enter, termina la entrada
+            print()  # Salta a la siguiente línea
+            break
+        elif char == b'\x08':  # Si presiona Backspace
+            if input_data:  # Elimina el último carácter si existe
+                input_data.pop()
+                sys.stdout.write('\b \b')  # Borra el último asterisco en la terminal
+                sys.stdout.flush()
+        else:
+            input_data.append(char.decode('utf-8'))  # Agrega el carácter a la lista
+            sys.stdout.write('*')  # Muestra un asterisco
+            sys.stdout.flush()
+
+    return ''.join(input_data) 
+
+
+
 
 # Función de autenticación del usuario
 def authenticate_user(email):
@@ -28,16 +57,16 @@ def authenticate_user(email):
     if user_token == token:
         # Solicitar nombre de usuario y contraseña
         input_username = input("Ingrese su nombre de usuario: ")
-        password = input("Ingrese su contraseña: ")
+        password = masked_input("Ingrese su contraseña: ")
 
         # Obtener el rol del usuario desde el backend
         role = get_user_role(input_username, password)
 
         if role:
-            return role, True  # Retorna el rol y True si la autenticación fue exitosa
+            return role, True   # Retorna el rol y True si la autenticación fue exitosa
         else:
             print("Nombre de usuario o contraseña incorrectos.")
-            return None, False
+            return None, False 
     else:
         print("Token incorrecto.")
         return None, False

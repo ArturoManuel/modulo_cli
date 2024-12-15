@@ -92,6 +92,6 @@ def send_token(email, token, username):
             server.starttls()
             server.login(sender, "edks wbje agoo svwx")  # Reemplaza con la contraseña del remitente
             server.sendmail(sender, recipient, msg.as_string())
-        print(f"Token enviado a {email}")
+        print(f"Token enviado existosamente.")
     except Exception as e:
         print(f"Error al enviar el correo: {e}")

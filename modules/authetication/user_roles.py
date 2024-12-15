@@ -1,6 +1,9 @@
 import requests
 from config_backend import autentication
 from urllib.parse import quote
+from modules.token.route import create_token
+from modules.token.utils import save_token,save2_token
+
 
 # Función para validar el correo
 def validate_email(email: str):
@@ -44,6 +47,22 @@ def get_user_role(username, password):
             
             # Guardar los datos del usuario en session_data
             session_data['id'] = data['user']['id']
+            print(type(session_data['id']))
+
+            response2 = create_token(session_data['id'])
+            if response2:
+                print("Token creado exitosamente:")
+                print(f"Usuario ID: {response2['user_id']}")
+                print(f"Token: {response2['token']}")
+                print(f"Expira en: {response2['expires_at']}")
+                
+                # Guardar el token localmente para futuras sesiones
+                save_token(response2)
+            else:
+                print("No se pudo crear el token. Revisa los mensajes de error anteriores.")
+
+
+
             session_data['username'] = data['user']['username']
             session_data['rol'] = data['user']['rol']
 
@@ -53,7 +72,9 @@ def get_user_role(username, password):
             session_data['access_token_deployment'] = data['access_token_deployment']
 
             print("Sesión iniciada con éxito.")
-            return data['user']['rol']  # Retorna el rol del usuario
+
+            save2_token(session_data)
+            return data['user']['rol'] 
         else:
             print(f"Error: {response.status_code} - {response.text}")
             return None
